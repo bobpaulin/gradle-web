@@ -1,0 +1,54 @@
+apply plugin: 'war'
+apply plugin: 'jetty'
+apply plugin: 'cargo'
+apply plugin: "maven"
+apply from: 'http://tellurianring.com/projects/gradle-plugins/gradle-release/apply.groovy'
+
+sourceCompatibility = 1.6
+group = "com.bobpaulin.gradle"
+
+buildscript {
+	repositories {
+		mavenCentral()
+	}
+
+	dependencies {
+		classpath 'org.gradle.api.plugins:gradle-cargo-plugin:0.6.1'
+	}
+}
+
+cargo {
+	containerId = 'tomcat7x'
+	port = 8080
+
+	deployable {
+		context = 'gradle-web'
+	}
+	
+	remote {
+		hostname = 'localhost'
+		username = 'admin'
+		password = 'admin'
+	}
+}
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	def cargoVersion = '1.3.3'
+	cargo "org.codehaus.cargo:cargo-core-uberjar:$cargoVersion",
+		  "org.codehaus.cargo:cargo-ant:$cargoVersion"
+}
+
+uploadArchives {
+	repositories {
+		mavenDeployer {
+			repository(url: "http://localhost:8282/archiva/repository/internal/"){
+				authentication(userName: "rlsmgr", password: "admin2")
+			}
+			
+		}
+	}
+}
