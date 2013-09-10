@@ -47,7 +47,7 @@ uploadArchives {
 		mavenDeployer {
 			pom.artifactId = 'gradle-web'
 			repository(url: "http://localhost:8282/archiva/repository/internal/"){
-				authentication(userName: "${archivaUsername}", password: "${archivaPassword}")
+				authentication(userName: "$archivaUsername", password: "$archivaPassword")
 			}
 			
 		}
