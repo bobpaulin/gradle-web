@@ -19,10 +19,6 @@ buildscript {
 	}
 }
 
-release {
-	versionPropertyFile = "$artifactory_user.properties"
-}
-
 cargo {
 	containerId = 'tomcat7x'
 	port = 8080
