@@ -1,11 +1,13 @@
 apply plugin: 'war'
 apply plugin: 'jetty'
 apply plugin: 'cargo'
-apply plugin: "maven"
+apply plugin: 'maven'
 apply from: 'http://tellurianring.com/projects/gradle-plugins/gradle-release/apply.groovy'
 
 sourceCompatibility = 1.6
 group = "com.bobpaulin.gradle"
+version = "$version.$artifactory_user." + project.getProperty('buildInfo.build.number')
+usesSnapshot = false
 
 buildscript {
 	repositories {
@@ -15,6 +17,10 @@ buildscript {
 	dependencies {
 		classpath 'org.gradle.api.plugins:gradle-cargo-plugin:0.6.1'
 	}
+}
+
+release {
+	versionPropertyFile = "$artifactory_user.properties"
 }
 
 cargo {
@@ -30,24 +36,57 @@ cargo {
 		username = 'admin'
 		password = 'admin'
 	}
+	
 }
 
 repositories {
+	mavenRepo urls: "$artifactory_contextUrl/libs-releases";
 	mavenCentral()
+}
+
+configurations{
+	gradleweb { transitive = false }
 }
 
 dependencies {
 	def cargoVersion = '1.3.3'
 	cargo "org.codehaus.cargo:cargo-core-uberjar:$cargoVersion",
 		  "org.codehaus.cargo:cargo-ant:$cargoVersion"
+	gradleweb "com.bobpaulin.gradle:gradle-web:$version"
 }
+
+task downloadWar << {
+
+}
+
+task listJars << {
+	configurations.gradleweb.each { File file -> 
+		println file }
+}
+
+task updateBuildNumber << {
+	def gradlePropsFile = project.file("gradle.properties")
+	def defaultProperties = new Properties()
+	def gradleFileReader = new FileReader(gradlePropsFile)
+	defaultProperties.load(gradleFileReader)
+	gradleFileReader.close()
+	def buildNum = defaultProperties.getProperty("buildInfo.build.number")
+	buildNum++
+	defaultProperties.setProperty("buildInfo.build.number", buildNum)
+	def gradleFileWriter = new FileWriter(gradlePropsFile)
+	defaultProperties.store(gradleFileWriter, "")
+	gradleFileWriter.flush()
+	gradleFileWriter.close()
+}
+
+createReleaseTag.dependsOn uploadArchives
 
 uploadArchives {
 	repositories {
 		mavenDeployer {
 			pom.artifactId = 'gradle-web'
-			repository(url: "http://localhost:8282/archiva/repository/internal/"){
-				authentication(userName: "$archivaUsername", password: "$archivaPassword")
+			repository(url: "$artifactory_contextUrl/libs-release-local" ){
+				authentication(userName: "$artifactory_user", password: "$artifactory_password")
 			}
 			
 		}
