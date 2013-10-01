@@ -6,8 +6,6 @@ apply from: 'http://tellurianring.com/projects/gradle-plugins/gradle-release/app
 
 sourceCompatibility = 1.6
 group = "com.bobpaulin.gradle"
-version = "$version.$artifactory_user." + project.getProperty('buildInfo.build.number')
-usesSnapshot = false
 
 buildscript {
 	repositories {
@@ -81,6 +79,7 @@ uploadArchives {
 	repositories {
 		mavenDeployer {
 			pom.artifactId = 'gradle-web'
+			pom.version = "$version.$artifactory_user." + project.getProperty('buildInfo.build.number')
 			repository(url: "$artifactory_contextUrl/libs-release-local" ){
 				authentication(userName: "$artifactory_user", password: "$artifactory_password")
 			}
