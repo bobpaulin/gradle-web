@@ -72,8 +72,8 @@ task updateBuildNumber << {
 	gradleFileWriter.flush()
 	gradleFileWriter.close()
 }
-
-createReleaseTag.dependsOn uploadArchives, updateBuildNumber
+confirmReleaseVersion.dependsOn updateBuildNumber
+createReleaseTag.dependsOn uploadArchives
 
 uploadArchives {
 	repositories {
