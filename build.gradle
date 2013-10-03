@@ -7,6 +7,12 @@ apply from: 'http://tellurianring.com/projects/gradle-plugins/gradle-release/app
 sourceCompatibility = 1.6
 group = "com.bobpaulin.gradle"
 
+def gradlePropsFile = project.file("gradle.properties")
+def defaultProperties = new Properties()
+def gradleFileReader = new FileReader(gradlePropsFile)
+defaultProperties.load(gradleFileReader)
+gradleFileReader.close()
+
 buildscript {
 	repositories {
 		mavenCentral()
@@ -59,11 +65,7 @@ task listJars << {
 }
 
 task updateBuildNumber << {
-	def gradlePropsFile = project.file("gradle.properties")
-	def defaultProperties = new Properties()
-	def gradleFileReader = new FileReader(gradlePropsFile)
-	defaultProperties.load(gradleFileReader)
-	gradleFileReader.close()
+	
 	def buildNum = defaultProperties.getProperty("buildInfo.build.number")
 	buildNum++
 	defaultProperties.setProperty("buildInfo.build.number", buildNum)
@@ -79,7 +81,7 @@ uploadArchives {
 	repositories {
 		mavenDeployer {
 			pom.artifactId = 'gradle-web'
-			pom.version = "$version.$artifactory_user." + project.getProperty('buildInfo.build.number')
+			pom.version = version + ".$artifactory_user." + project.getProperty('buildInfo.build.number')
 			repository(url: "$artifactory_contextUrl/libs-release-local" ){
 				authentication(userName: "$artifactory_user", password: "$artifactory_password")
 			}
