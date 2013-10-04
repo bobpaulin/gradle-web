@@ -6,12 +6,14 @@ apply from: 'http://tellurianring.com/projects/gradle-plugins/gradle-release/app
 
 sourceCompatibility = 1.6
 group = "com.bobpaulin.gradle"
-
-def gradlePropsFile = project.file("gradle.properties")
-def defaultProperties = new Properties()
+def userName = System.getProperty("user.name");
+def gradlePropsFile = project.file("$userName.properties")
+def userProperties = new Properties()
 def gradleFileReader = new FileReader(gradlePropsFile)
-defaultProperties.load(gradleFileReader)
+userProperties.load(gradleFileReader)
 gradleFileReader.close()
+
+project.setProperty("buildInfo.build.number", userProperties.getProperty("buildInfo.build.number"))
 
 buildscript {
 	repositories {
@@ -40,7 +42,7 @@ cargo {
 }
 
 repositories {
-	mavenRepo urls: "$artifactory_contextUrl/libs-releases";
+	mavenRepo urls: "$repository_contextUrl/libs-releases";
 	mavenCentral()
 }
 
@@ -66,17 +68,17 @@ task listJars << {
 
 task updateBuildNumber << {
 	
-	def buildNum = defaultProperties.getProperty("buildInfo.build.number")
+	def buildNum = userProperties.getProperty("buildInfo.build.number")
 	buildNum++
-	defaultProperties.setProperty("buildInfo.build.number", buildNum)
+	userProperties.setProperty("buildInfo.build.number", buildNum)
 	def gradleFileWriter = new FileWriter(gradlePropsFile)
-	defaultProperties.store(gradleFileWriter, "")
+	userProperties.store(gradleFileWriter, "")
 	gradleFileWriter.flush()
 	gradleFileWriter.close()
 }
 
 task updateUploadedPom << {
-	uploadArchives.repositories.mavenDeployer.pom.version = project.version + ".$artifactory_user." + project.getProperty('buildInfo.build.number')
+	uploadArchives.repositories.mavenDeployer.pom.version = project.version + ".$repository_user." + project.getProperty('buildInfo.build.number')
 }
 
 
@@ -88,8 +90,8 @@ uploadArchives {
 	repositories {
 		mavenDeployer {
 			pom.artifactId = 'gradle-web'
-			repository(url: "$artifactory_contextUrl/libs-release-local" ){
-				authentication(userName: "$artifactory_user", password: "$artifactory_password")
+			repository(url: "$repository_contextUrl/libs-release-local" ){
+				authentication(userName: userProperties.getProperty("repository_user"), password: userProperties.getProperty("repository_password"))
 			}
 			
 		}
