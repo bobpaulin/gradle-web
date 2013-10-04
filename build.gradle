@@ -73,15 +73,18 @@ task updateBuildNumber << {
 	defaultProperties.store(gradleFileWriter, "")
 	gradleFileWriter.flush()
 	gradleFileWriter.close()
+	uploadArchives.repositories.mavenDeployer.pom.version = project.version + ".$artifactory_user." + project.getProperty('buildInfo.build.number')
 }
+
+
 confirmReleaseVersion.dependsOn updateBuildNumber
 createReleaseTag.dependsOn uploadArchives
+
 
 uploadArchives {
 	repositories {
 		mavenDeployer {
 			pom.artifactId = 'gradle-web'
-			pom.version = project.version + ".$artifactory_user." + project.getProperty('buildInfo.build.number')
 			repository(url: "$artifactory_contextUrl/libs-release-local" ){
 				authentication(userName: "$artifactory_user", password: "$artifactory_password")
 			}
