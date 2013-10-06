@@ -109,7 +109,7 @@ uploadArchives {
 		mavenDeployer {
 			pom.artifactId = 'gradle-web'
 			repository(url: "$repository_contextUrl/libs-release-local" ){
-				authentication(userName: project.repository_user, password: project.repository_password)
+				authentication(userName: project.getProperty("repository_user"), password: project.getProperty("repository_password"))
 			}
 			
 		}
