@@ -95,7 +95,7 @@ task updateBuildNumber << {
 task updateUploadedPom << {
 	def pomVersion = project.version
 	if(!isRelease)
-		pomVersion += ".$repository_user." + project.getProperty('buildInfo.build.number')
+		pomVersion += userName + "." + project.getProperty('buildInfo.build.number')
 	uploadArchives.repositories.mavenDeployer.pom.version = pomVersion
 }
 
@@ -109,7 +109,7 @@ uploadArchives {
 		mavenDeployer {
 			pom.artifactId = 'gradle-web'
 			repository(url: "$repository_contextUrl/libs-release-local" ){
-				authentication(userName: "$repository_user", password: "$repository_password")
+				authentication(userName: project.repository_user, password: project.repository_password)
 			}
 			
 		}
