@@ -19,6 +19,8 @@ userProperties.load(gradleFileReader)
 gradleFileReader.close()
 
 project.setProperty("buildInfo.build.number", userProperties.getProperty("buildInfo.build.number"))
+project.setProperty("repository_user", userProperties.getProperty("repository_user"))
+project.setProperty("repository_password", userProperties.getProperty("repository_password"))
 
 buildscript {
 	repositories {
@@ -107,7 +109,7 @@ uploadArchives {
 		mavenDeployer {
 			pom.artifactId = 'gradle-web'
 			repository(url: "$repository_contextUrl/libs-release-local" ){
-				authentication(userName: userProperties.getProperty("repository_user"), password: userProperties.getProperty("repository_password"))
+				authentication(userName: "$repository_user", password: "$repository_password")
 			}
 			
 		}
