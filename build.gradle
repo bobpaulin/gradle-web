@@ -1,13 +1,18 @@
+import de.undercouch.gradle.tasks.download.Download
+apply plugin: 'download-task'
 apply plugin: 'war'
 apply plugin: 'jetty'
 apply plugin: 'cargo'
 apply plugin: 'maven'
 apply from: 'http://tellurianring.com/projects/gradle-plugins/gradle-release/apply.groovy'
 
+def isRelease = false
+
 sourceCompatibility = 1.6
 group = "com.bobpaulin.gradle"
-def userName = System.getProperty("user.name");
-def gradlePropsFile = project.file("$userName.properties")
+def artifactDownloadPath = "target/gradle-web.war"
+def userName = System.getProperty("user.name")
+def gradlePropsFile = project.file(userName + ".properties")
 def userProperties = new Properties()
 def gradleFileReader = new FileReader(gradlePropsFile)
 userProperties.load(gradleFileReader)
@@ -22,6 +27,7 @@ buildscript {
 
 	dependencies {
 		classpath 'org.gradle.api.plugins:gradle-cargo-plugin:0.6.1'
+		classpath 'de.undercouch:gradle-download-task:0.2'
 	}
 }
 
@@ -31,6 +37,7 @@ cargo {
 
 	deployable {
 		context = 'gradle-web'
+		file = project.file(artifactDownloadPath)
 	}
 	
 	remote {
@@ -58,12 +65,18 @@ dependencies {
 }
 
 task downloadWar << {
-
-}
-
-task listJars << {
-	configurations.gradleweb.each { File file -> 
-		println file }
+	def groupPath = project.group.replace(".", "/")
+	def versionPath = project.version
+	if(!isRelease)
+	{
+		versionPath += '.admin.6'
+	}
+	
+	def artifactNamePath = 'gradle-web' + versionPath + '.war'
+	def downloadUrl = project.getProperty("repository_contextUrl") + "/libs-release-local/" + groupPath + "/gradle-web/" + versionPath + "/" + artifactNamePath
+	
+	ant.get(src: downloadUrl, dest: artifactDownloadPath)
+	
 }
 
 task updateBuildNumber << {
@@ -78,7 +91,10 @@ task updateBuildNumber << {
 }
 
 task updateUploadedPom << {
-	uploadArchives.repositories.mavenDeployer.pom.version = project.version + ".$repository_user." + project.getProperty('buildInfo.build.number')
+	def pomVersion = project.version
+	if(!isRelease)
+		pomVersion += ".$repository_user." + project.getProperty('buildInfo.build.number')
+	uploadArchives.repositories.mavenDeployer.pom.version = pomVersion
 }
 
 
