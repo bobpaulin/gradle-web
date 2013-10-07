@@ -95,7 +95,7 @@ task updateBuildNumber << {
 task updateUploadedPom << {
 	def pomVersion = project.version
 	if(!isRelease)
-		pomVersion += userName + "." + project.getProperty('buildInfo.build.number')
+		pomVersion += "." + userName + "." + project.getProperty('buildInfo.build.number')
 	uploadArchives.repositories.mavenDeployer.pom.version = pomVersion
 }
 
