@@ -19,3 +19,5 @@ Within this file place the following:
     deployUserName=admin
     #The Servlet Container Password
     deployPassword=admin
+    #The Servlet Container Port
+    deployPort=8080

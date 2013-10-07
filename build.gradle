@@ -6,7 +6,6 @@ apply from: 'http://tellurianring.com/projects/gradle-plugins/gradle-release/app
 
 
 //Initialization
-
 sourceCompatibility = 1.6
 group = "com.bobpaulin.gradle"
 def artifactDownloadPath = "target/gradle-web.war"
@@ -37,7 +36,7 @@ buildscript {
 
 cargo {
 	containerId = 'tomcat7x'
-	port = 8080
+	port = Integer.parseInt("$deployPort")
 
 	deployable {
 		context = 'gradle-web'
@@ -84,13 +83,22 @@ war {
 task downloadWar << {
 	
 	def groupPath = project.group.replace(".", "/")
-	def defaultVersion = project.version + "." + userName + ".$buildNumber"
-	println "Enter Version: [" + defaultVersion +"]"
-	def versionPath = System.in.newReader().readLine() ?: defaultVersion
+	def defaultVersion = project.version + ".$userName.$buildNumber"
+	def versionPath
+	def versionMessage = "Enter Version: [$defaultVersion]"
+	if(System.console())
+	{
+		versionPath = System.console().readLine(versionMessage) ?: defaultVersion
+	}
+	else
+	{
+		println versionMessage
+		versionPath = System.in.newReader().readLine() ?: defaultVersion
+	}
 	
-	def artifactNamePath = 'gradle-web-' + versionPath + '.war'
+	def artifactNamePath = "gradle-web-" + versionPath + ".war"
 	
-	def downloadUrl = "$repositoryContextUrl/libs-release-local/" + groupPath + "/gradle-web/" + versionPath + "/" + artifactNamePath
+	def downloadUrl = "$repositoryContextUrl/libs-release-local/$groupPath/gradle-web/$versionPath/$artifactNamePath"
 	
 	def targetDir = new File('target')
 	
@@ -105,9 +113,9 @@ task downloadWar << {
 
 task updateBuildNumber << {
 	
-	def buildNum = project.ext.get("buildNumber")
+	def buildNum = Integer.parseInt(project.ext.get("buildNumber"))
 	buildNum++
-	userProperties.setProperty("buildNumber", buildNum)
+	userProperties.setProperty("buildNumber", buildNum.toString())
 	def gradleFileWriter = new FileWriter(gradlePropsFile)
 	userProperties.store(gradleFileWriter, "")
 	gradleFileWriter.flush()
@@ -117,7 +125,7 @@ task updateBuildNumber << {
 task updateUploadedPom << {
 	def pomVersion = project.version
 	if(!project.getGradle().getTaskGraph().hasTask(":createReleaseTag"))
-		pomVersion += "." + userName + ".$buildNumber"
+		pomVersion += ".$userName.$buildNumber"
 	uploadArchives.repositories.mavenDeployer.pom.version = pomVersion
 }
 
