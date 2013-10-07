@@ -67,14 +67,14 @@ task downloadWar << {
 	println "Enter Version: [" + project.version + "]"
 	def versionPath = System.in.newReader().readLine() ?: project.version
 	
-	println "Enter Build Number: [" + project.ext.set("buildInfo.build.number") + "]"
-	def buildNumber = System.in.newReader().readLine() ?: project.ext.set("buildInfo.build.number")
+	println "Enter Build Number: [" + project.ext.get("buildInfo.build.number") + "]"
+	def buildNumber = System.in.newReader().readLine() ?: project.ext.get("buildInfo.build.number")
 	if(!isRelease)
 	{
 		versionPath += '.' + userName + '.' + buildNumber
 	}
 	
-	def artifactNamePath = 'gradle-web' + versionPath + '.war'
+	def artifactNamePath = 'gradle-web-' + versionPath + '.war'
 	def downloadUrl = project.getProperty("repository_contextUrl") + "/libs-release-local/" + groupPath + "/gradle-web/" + versionPath + "/" + artifactNamePath
 	
 	ant.get(src: downloadUrl, dest: artifactDownloadPath)
