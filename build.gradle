@@ -11,6 +11,11 @@ group = "com.bobpaulin.gradle"
 def artifactDownloadPath = "target/gradle-web.war"
 def userName = System.getProperty("user.name")
 def gradlePropsFile = project.file(userName + ".properties")
+if(!gradlePropsFile.exists())
+{
+	def templateFile = file("userTemplate.properties")
+	ant.copy(file:templateFile.getAbsolutePath(), toFile: gradlePropsFile.getAbsolutePath() )
+}
 def userProperties = new Properties()
 def gradleFileReader = new FileReader(gradlePropsFile)
 userProperties.load(gradleFileReader)
