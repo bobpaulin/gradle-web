@@ -1,12 +1,11 @@
-import de.undercouch.gradle.tasks.download.Download
-apply plugin: 'download-task'
 apply plugin: 'war'
 apply plugin: 'jetty'
 apply plugin: 'cargo'
 apply plugin: 'maven'
 apply from: 'http://tellurianring.com/projects/gradle-plugins/gradle-release/apply.groovy'
 
-def isRelease = false
+
+//Initialization
 
 sourceCompatibility = 1.6
 group = "com.bobpaulin.gradle"
@@ -18,10 +17,14 @@ def gradleFileReader = new FileReader(gradlePropsFile)
 userProperties.load(gradleFileReader)
 gradleFileReader.close()
 
-project.ext.set("buildInfo.build.number", userProperties.getProperty("buildInfo.build.number"))
-project.ext.set("repository_user", userProperties.getProperty("repository_user"))
-project.ext.set("repository_password", userProperties.getProperty("repository_password"))
+//Load user properties
+for(currentUserProperty in userProperties.stringPropertyNames())
+{
+	project.ext.set(currentUserProperty, userProperties.getProperty(currentUserProperty))
+}
 
+
+//Configurations
 buildscript {
 	repositories {
 		mavenCentral()
@@ -29,7 +32,6 @@ buildscript {
 
 	dependencies {
 		classpath 'org.gradle.api.plugins:gradle-cargo-plugin:0.6.1'
-		classpath 'de.undercouch:gradle-download-task:0.2'
 	}
 }
 
@@ -43,15 +45,15 @@ cargo {
 	}
 	
 	remote {
-		hostname = 'localhost'
-		username = 'admin'
-		password = 'admin'
+		hostname = "$deployHostname"
+		username = "$deployUserName"
+		password = "$deployPassword"
 	}
 	
 }
 
 repositories {
-	mavenRepo urls: "$repository_contextUrl/libs-releases";
+	mavenRepo url: "$repositoryContextUrl/libs-releases";
 	mavenCentral()
 }
 
@@ -61,21 +63,36 @@ dependencies {
 		  "org.codehaus.cargo:cargo-ant:$cargoVersion"
 }
 
-task downloadWar << {
-	def groupPath = project.group.replace(".", "/")
-	
-	println "Enter Version: [" + project.version + "]"
-	def versionPath = System.in.newReader().readLine() ?: project.version
-	
-	println "Enter Build Number: [" + project.ext.get("buildInfo.build.number") + "]"
-	def buildNumber = System.in.newReader().readLine() ?: project.ext.get("buildInfo.build.number")
-	if(!isRelease)
-	{
-		versionPath += '.' + userName + '.' + buildNumber
+uploadArchives {
+	repositories {
+		mavenDeployer {
+			pom.artifactId = 'gradle-web'
+			repository(url: "$repositoryContextUrl/libs-release-local" ){
+				authentication(userName: "$repositoryUser", password: "$repositoryPassword")
+			}
+			
+		}
 	}
+}
+
+//Custom Tasks
+task downloadWar << {
+	
+	def groupPath = project.group.replace(".", "/")
+	def defaultVersion = project.version + "." + userName + ".$buildNumber"
+	println "Enter Version: [" + defaultVersion +"]"
+	def versionPath = System.in.newReader().readLine() ?: defaultVersion
 	
 	def artifactNamePath = 'gradle-web-' + versionPath + '.war'
-	def downloadUrl = project.getProperty("repository_contextUrl") + "/libs-release-local/" + groupPath + "/gradle-web/" + versionPath + "/" + artifactNamePath
+	
+	def downloadUrl = "$repositoryContextUrl/libs-release-local/" + groupPath + "/gradle-web/" + versionPath + "/" + artifactNamePath
+	
+	def targetDir = new File('target')
+	
+	if(!targetDir.isDirectory())
+	{
+		targetDir.mkdirs()
+	}
 	
 	ant.get(src: downloadUrl, dest: artifactDownloadPath)
 	
@@ -83,9 +100,9 @@ task downloadWar << {
 
 task updateBuildNumber << {
 	
-	def buildNum = project.ext.get("buildInfo.build.number")
+	def buildNum = project.ext.get("buildNumber")
 	buildNum++
-	userProperties.setProperty("buildInfo.build.number", buildNum)
+	userProperties.setProperty("buildNumber", buildNum)
 	def gradleFileWriter = new FileWriter(gradlePropsFile)
 	userProperties.store(gradleFileWriter, "")
 	gradleFileWriter.flush()
@@ -94,24 +111,13 @@ task updateBuildNumber << {
 
 task updateUploadedPom << {
 	def pomVersion = project.version
-	if(!isRelease)
-		pomVersion += "." + userName + "." + project.ext.get('buildInfo.build.number')
+	if(!project.getGradle().getTaskGraph().hasTask("release"))
+		pomVersion += "." + userName + ".$buildNumber"
 	uploadArchives.repositories.mavenDeployer.pom.version = pomVersion
 }
 
 
+//Task Dependencies
 confirmReleaseVersion.dependsOn updateBuildNumber
 createReleaseTag.dependsOn uploadArchives
 uploadArchives.dependsOn updateUploadedPom
-
-uploadArchives {
-	repositories {
-		mavenDeployer {
-			pom.artifactId = 'gradle-web'
-			repository(url: "$repository_contextUrl/libs-release-local" ){
-				authentication(userName: project.ext.get("repository_user"), password: project.ext.get("repository_password"))
-			}
-			
-		}
-	}
-}

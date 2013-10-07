@@ -13,3 +13,9 @@ Within this file place the following:
     repository_password=password
     #The build number
     buildInfo.build.number=1
+    #The Servlet Container Hostname
+    deployHostname=localhost
+    #The Servlet Container User Name
+    deployUserName=admin
+    #The Servlet Container Password
+    deployPassword=admin
