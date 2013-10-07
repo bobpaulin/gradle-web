@@ -75,6 +75,11 @@ uploadArchives {
 	}
 }
 
+war {
+	archiveName = "gradle-web.war"
+	destinationDir = file("target")
+}
+
 //Custom Tasks
 task downloadWar << {
 	
@@ -116,8 +121,7 @@ task updateUploadedPom << {
 	uploadArchives.repositories.mavenDeployer.pom.version = pomVersion
 }
 
-
 //Task Dependencies
-confirmReleaseVersion.dependsOn updateBuildNumber
+updateUploadedPom.dependsOn updateBuildNumber
 createReleaseTag.dependsOn uploadArchives
 uploadArchives.dependsOn updateUploadedPom
