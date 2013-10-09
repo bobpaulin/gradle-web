@@ -11,6 +11,8 @@ group = "com.bobpaulin.gradle"
 def artifactDownloadPath = "target/gradle-web.war"
 def userName = System.getProperty("user.name")
 def gradlePropsFile = project.file(userName + ".properties")
+
+//If user properties don't exist create it based on template.
 if(!gradlePropsFile.exists())
 {
 	def templateFile = file("userTemplate.properties")
