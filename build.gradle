@@ -2,13 +2,14 @@ apply plugin: 'war'
 apply plugin: 'jetty'
 apply plugin: 'cargo'
 apply plugin: 'maven'
-apply from: 'http://tellurianring.com/projects/gradle-plugins/gradle-release/apply.groovy'
+apply plugin: 'release'
 
 
 //Initialization
 sourceCompatibility = 1.6
-group = "com.bobpaulin.gradle"
-def artifactDownloadPath = "target/gradle-web.war"
+
+def artifactId = project.name
+def artifactDownloadPath = "target/" + artifactId +".war"
 def userName = System.getProperty("user.name")
 def gradlePropsFile = project.file(userName + ".properties")
 
@@ -34,10 +35,12 @@ for(currentUserProperty in userProperties.stringPropertyNames())
 buildscript {
 	repositories {
 		mavenCentral()
+		maven { url "https://oss.sonatype.org/content/groups/public"}
 	}
 
 	dependencies {
-		classpath 'org.gradle.api.plugins:gradle-cargo-plugin:0.6.1'
+		classpath 'org.gradle.api.plugins:gradle-cargo-plugin:0.6.1',
+					'com.github.townsfolk:gradle-release:1.2'
 	}
 }
 
@@ -46,7 +49,7 @@ cargo {
 	port = Integer.parseInt("$deployPort")
 
 	deployable {
-		context = 'gradle-web'
+		context = "$artifactId"
 		file = project.file(artifactDownloadPath)
 	}
 	
@@ -72,7 +75,7 @@ dependencies {
 uploadArchives {
 	repositories {
 		mavenDeployer {
-			pom.artifactId = 'gradle-web'
+			pom.artifactId = "$artifactId"
 			repository(url: "$repositoryContextUrl/libs-release-local" ){
 				authentication(userName: "$repositoryUser", password: "$repositoryPassword")
 			}
@@ -82,7 +85,7 @@ uploadArchives {
 }
 
 war {
-	archiveName = "gradle-web.war"
+	archiveName = artifactId + ".war"
 	destinationDir = file("target")
 }
 
@@ -103,7 +106,7 @@ task downloadWar << {
 		versionPath = System.in.newReader().readLine() ?: defaultVersion
 	}
 	
-	def artifactNamePath = "gradle-web-" + versionPath + ".war"
+	def artifactNamePath = "$artifactId-" + versionPath + ".war"
 	
 	def downloadUrl = "$repositoryContextUrl/libs-release-local/$groupPath/gradle-web/$versionPath/$artifactNamePath"
 	
